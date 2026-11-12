@@ -1,0 +1,14 @@
+{
+  "name": "rtih-ui-02-godavari-field",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Godavari Field — RTIH AP Godavari Pushkaralu 2027 Staff & Vendor mobile app UI (interactive, offline-first prototype).",
+  "type": "module",
+  "scripts": {
+    "dev": "node scripts/serve.mjs",
+    "start": "node scripts/serve.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node scripts/check.mjs && node --test tests/*.test.mjs"
+  },
+  "engines": { "node": ">=20" }
+}
