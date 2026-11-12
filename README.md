@@ -4,6 +4,8 @@ The interactive UI for the **RTIH AP Godavari Pushkaralu 2027 Staff & Vendor Mob
 
 The field staff it's for are Zone Marshals, Traffic Controllers, Medical Teams and Vendor Inspectors. They work 8–12 hour shifts outdoors, often in direct sunlight, with one hand free, sometimes wearing gloves, and with network coverage that comes and goes. Every screen is designed around those conditions.
 
+**Figma design:** [RTIH_UI_02 — Godavari Field Staff & Vendor App](https://www.figma.com/design/L0IhZZNuQwNLJpBzUgdLN6). It contains variables with Dark and Light modes, text and effect styles, 68 icon components, the component library, 8 screens, and 6 state/flow frames.
+
 ![Showcase](docs/screenshots/showcase.png)
 
 | Tasks | Task sheet | Zone Map | Field Report | Inspection |
@@ -31,6 +33,18 @@ The field staff it's for are Zone Marshals, Traffic Controllers, Medical Teams a
 | §9 Responsive | Container queries: < 360px compact, ≥ 600px two-column incoming list, landscape map sidebar |
 
 The full item-by-item checklist is in [docs/SPEC_COMPLIANCE.md](docs/SPEC_COMPLIANCE.md).
+
+## Figma file structure
+
+| Page | Contents |
+|---|---|
+| Cover | Title, scope, status palette, Tasks preview |
+| Foundations | Colour boards for Dark and Light themes (bound variables with contrast ratios), type scale, spacing, radius, elevation, the P1–P6 tenets |
+| Components | Lucide icon set; Button (6 variants × 3 sizes); Priority Pill; Switch; Checkbox; Status Bar; Section Header; Header; Tab Bar; Offline Bar; Task Card (Active, Incoming, Completed); Checklist Item; Settings Row; KPI Card; Toast |
+| Screens | 01 Tasks · 02 Task Detail Sheet · 03 Zone Map · 04 Field Report · 05 Vendor Inspection · 06 Profile & Shift · 07 Incoming Dispatch · 08 Login |
+| States & Flows | Offline with swipe-to-accept · Notifications · Decline reason · Quick actions · Light theme · Task completed |
+
+The screens are assembled from component instances, and their colours are bound to the `Godavari Field / Color` variables. Switching a frame's variable mode to **Light** re-themes it.
 
 ## Run locally
 
