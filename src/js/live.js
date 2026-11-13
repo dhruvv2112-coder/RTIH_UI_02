@@ -1,5 +1,7 @@
-// Godavari Hub adapter for the Field app. Active only when the app is served by the local hub
-// (GET /api/health answers); on Vercel or file hosting it does nothing and the demo runs offline.
+// Godavari Hub adapter for the Field app. Connects to the hub that serves the page (local laptop
+// hub or the cloud hub site), else to the cloud hub (CLOUD_HUB), so the phone is live-linked with
+// Command and the Pilgrim app from anywhere. ?hub=off keeps the offline demo; ?hub=<url> picks
+// another hub.
 //
 //  hub → field   task.created  (pilgrim SOS / Command dispatch) → incoming-dispatch overlay
 //                task.updated  (cancelled by pilgrim / Command)   → task closed with a toast
@@ -18,8 +20,26 @@ const STAFF_NAME = 'Ramesh Kumar';
 let live = false;
 const sent = new Map(); // task id → { status, notes, escalated } last pushed to the hub
 
+export const CLOUD_HUB = 'https://godavari-hub.vercel.app';
+let BASE = '';
+
+async function findHub() {
+  const q = new URLSearchParams(location.search).get('hub');
+  if (q === 'off') return null;
+  for (const base of q ? [q.replace(/\/$/, '')] : ['', CLOUD_HUB]) {
+    const ac = new AbortController();
+    const tm = setTimeout(() => ac.abort(), 3500);
+    try {
+      const r = await fetch(`${base}/api/health`, { signal: ac.signal, cache: 'no-store' });
+      const h = await r.json();
+      if (r.ok && h?.name === 'godavari-hub') return { base, h };
+    } catch { /* try the next one */ } finally { clearTimeout(tm); }
+  }
+  return null;
+}
+
 async function api(path, body) {
-  const r = await fetch(path, body === undefined ? undefined : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const r = await fetch(BASE + path, body === undefined ? undefined : { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
   const data = await r.json().catch(() => null);
   return { ok: r.ok, status: r.status, data };
 }
@@ -27,10 +47,9 @@ const snap = (t) => ({ status: t.status, notes: (t.notes || []).length, escalate
 
 export async function startLive() {
   actions.openVerify = openVerify; // works offline too (payload check only)
-  try {
-    const h = await api('/api/health');
-    if (!h.ok || h.data?.name !== 'godavari-hub') return;
-  } catch { return; }
+  const hub = await findHub();
+  if (!hub) return;
+  BASE = hub.base;
   live = true;
   document.documentElement.dataset.hub = 'live';
   for (const t of state.tasks) if (t.hub) sent.set(t.id, snap(t));
@@ -38,11 +57,11 @@ export async function startLive() {
   subscribe(onLocalChange);
   actions.onStaffSOS = () => api('/api/alerts', { type: 'medical', severity: 'critical', zone: 'A', title: `Staff SOS — ${STAFF_NAME}`, desc: 'Zone Marshal pressed SOS on the Field app · Ghat #3, Zone A', source: 'Field app SOS', lat: 17.0016, lng: 81.7689 }).catch(() => {});
   actions.onStaffSOSCancel = () => {};
-  toast('Connected to Command Centre (Godavari Hub)', 'info', 2200);
+  toast(hub.h.runtime === 'vercel' ? 'Connected to Command Centre (cloud hub)' : 'Connected to Command Centre (Godavari Hub)', 'info', 2200);
 }
 
 function connect() {
-  const es = new EventSource('/api/events?app=field&topics=task,reset,booking');
+  const es = new EventSource(`${BASE}/api/events?app=field&topics=task,reset,booking`);
   const data = (e) => JSON.parse(e.data).data;
   es.addEventListener('task.created', (e) => {
     const t = data(e);
