@@ -9,6 +9,7 @@ import { renderMap, bindMap, layersPanel, bindLayers } from './screens/map.js';
 import { renderReport, bindReport, reportHeaderRight } from './screens/report.js';
 import { renderInspection, bindInspection, inspectionHeaderRight } from './screens/inspection.js';
 import { renderProfile, bindProfile, renderLogin, bindLogin } from './screens/profile.js';
+import './live.js';
 import { openTask, openQuick, openDecline, openDispatch, toggleNotifications, openMenu, openEmergency, notifOpen, closeNotif } from './overlays.js';
 
 window.__bootAt = window.__bootAt || Date.now();
@@ -118,7 +119,7 @@ function navigate(route) {
 }
 
 /* ---------- reactive updates ---------- */
-const SOFT = new Set(['layers', 'notif-open', 'dispatch-open', 'dispatch-close', 'sync-step']);
+const SOFT = new Set(['layers', 'notif-open', 'dispatch-open', 'dispatch-close', 'sync-step', 'live']);
 subscribe((reason) => {
   if (reason === 'layers' && state.route === 'map') {
     const vp = $('#mapvp'); if (vp) { render(); }
@@ -199,5 +200,5 @@ if (!navigator.onLine) setOnline(false);
 
 // Offline shell (P4)
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }

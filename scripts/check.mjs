@@ -22,9 +22,11 @@ const walk = (file) => {
 walk(join(root, 'src/js/app.js'));
 
 const sw = readFileSync(join(root, 'sw.js'), 'utf8');
-for (const [, ref] of sw.matchAll(/'(\/[^']*)'/g)) if (ref !== '/' && !existsSync(join(root, ref))) fail(`sw.js precache → ${ref}`);
-const jsModules = [...seen].map((f) => '/' + f.replace(root, '').replace(/\\/g, '/'));
-for (const m of jsModules) if (!sw.includes(`'${m}'`)) fail(`sw.js does not precache ${m}`);
+// precache list is relative to the worker scope (works at / and at /staff/)
+const list = sw.slice(sw.indexOf('const ASSETS'), sw.indexOf('].map('));
+for (const [, ref] of list.matchAll(/'([^']+)'/g)) if (ref !== './' && !existsSync(join(root, ref))) fail(`sw.js precache → ${ref}`);
+const jsModules = [...seen].map((f) => f.replace(root, '').replace(/\\/g, '/').replace(/^\//, ''));
+for (const m of jsModules) if (!list.includes(`'${m}'`)) fail(`sw.js does not precache ${m}`);
 
 console.log(failed ? `${failed} problem(s)` : `✓ ${seen.size} modules, all references resolve and are precached`);
 process.exit(failed ? 1 : 0);

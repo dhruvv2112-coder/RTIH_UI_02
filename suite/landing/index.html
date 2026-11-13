@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>RTIH · Godavari Pushkaralu 2027 — Local Suite</title>
+  <meta name="color-scheme" content="light" />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%231E3A5F'/%3E%3Cpath d='M6 20c4-4 6 4 10 0s6 4 10 0' stroke='%2393C5FD' stroke-width='2.5' fill='none'/%3E%3C/svg%3E" />
+  <style>
+    :root { --ink: #0F172A; --ink2: #475569; --ink3: #64748B; --line: #E2E8F0; --bg: #F8FAFC; --navy: #1E3A5F; --blue: #2563EB; --ok: #16A34A; --okfg: #1A7F37; --warn: #D97706; --saffron: #B45309; --teal: #0F766E; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 15px/1.5 Inter, 'Segoe UI', system-ui, -apple-system, sans-serif; color: var(--ink); background: var(--bg); }
+    header { background: var(--navy); color: #fff; padding: 28px 32px 72px; }
+    header .wrap, main { max-width: 1120px; margin: 0 auto; }
+    .kicker { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; color: #93C5FD; font-weight: 600; }
+    h1 { margin: 6px 0 6px; font-size: 28px; line-height: 1.2; letter-spacing: -.01em; }
+    header p { margin: 0; color: #CBD5E1; max-width: 760px; }
+    main { padding: 0 32px 48px; margin-top: -48px; }
+    .apps { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+    .card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; box-shadow: 0 1px 2px rgba(15,23,42,.06), 0 8px 24px rgba(15,23,42,.06); }
+    .card__top { display: flex; align-items: center; gap: 12px; }
+    .badge { width: 44px; height: 44px; border-radius: 10px; display: grid; place-items: center; color: #fff; flex: none; }
+    .card h2 { margin: 0; font-size: 18px; }
+    .card .who { color: var(--ink3); font-size: 13px; }
+    .card p { margin: 0; color: var(--ink2); font-size: 14px; }
+    .row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; height: 40px; padding: 0 16px; border-radius: 8px; font-weight: 600; text-decoration: none; border: 1px solid transparent; cursor: pointer; font-size: 14px; }
+    .btn--primary { background: var(--blue); color: #fff; }
+    .btn--primary:hover { background: #1D4ED8; }
+    .btn--ghost { border-color: var(--line); color: var(--ink); background: #fff; }
+    .btn--ghost:hover { background: #F1F5F9; }
+    .btn:focus-visible { outline: 3px solid #93C5FD; outline-offset: 2px; }
+    .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 600; padding: 2px 10px; border-radius: 999px; background: #F1F5F9; color: var(--ink2); }
+    .pill i { width: 8px; height: 8px; border-radius: 50%; background: #94A3B8; }
+    .pill.on { background: #DCFCE7; color: var(--okfg); } .pill.on i { background: var(--ok); }
+    .url { font: 13px/1.4 'JetBrains Mono', Consolas, monospace; color: var(--ink2); word-break: break-all; }
+    section { margin-top: 28px; }
+    h3 { font-size: 16px; margin: 0 0 12px; }
+    .grid2 { display: grid; grid-template-columns: 1.3fr 1fr; gap: 16px; }
+    .panel { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 20px; }
+    ol.flow { margin: 0; padding-left: 20px; display: grid; gap: 10px; color: var(--ink2); }
+    ol.flow b { color: var(--ink); }
+    .qrs { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    .qr { text-align: center; font-size: 12px; color: var(--ink2); }
+    .qr svg { width: 100%; max-width: 132px; aspect-ratio: 1; display: block; margin: 0 auto 6px; border: 1px solid var(--line); border-radius: 8px; background: #fff; }
+    .qr .url { font-size: 11px; }
+    .log { max-height: 260px; overflow: auto; font: 12.5px/1.5 'JetBrains Mono', Consolas, monospace; color: var(--ink2); margin: 0; padding: 0; list-style: none; }
+    .log li { padding: 6px 0; border-bottom: 1px dashed var(--line); }
+    .log time { color: var(--ink3); margin-right: 8px; }
+    .muted { color: var(--ink3); font-size: 13px; }
+    footer { color: var(--ink3); font-size: 12px; text-align: center; padding: 16px; }
+    @media (max-width: 900px) { .apps, .grid2 { grid-template-columns: 1fr; } header { padding: 24px 20px 64px; } main { padding: 0 20px 40px; } }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <div class="kicker">RTIH Innovation Challenge · AP Godavari Pushkaralu 2027</div>
+      <h1>One local server, three live-linked apps</h1>
+      <p>Pilgrim SOS reaches the Command Centre in under a second, Command dispatches staff, and the field app's accept, notes and completion flow straight back. Open each app in its own window — or on phones on the same Wi-Fi.</p>
+    </div>
+  </header>
+  <main>
+    <div class="apps" id="apps"></div>
+
+    <section class="grid2">
+      <div class="panel">
+        <h3>Try the end-to-end flow (2 minutes)</h3>
+        <ol class="flow">
+          <li><b>Open all three apps</b> side by side (or the Staff and Pilgrim apps on two phones via the QR codes).</li>
+          <li><b>Pilgrim app</b> → press and hold the red <b>SOS</b> bar for 1 second.</li>
+          <li><b>Command</b> → a critical “Pilgrim SOS” alert appears at the top of the queue with a chime. Press <b>Dispatch</b>, pick <b>Ramesh K</b> (marked “Field app · online”) and send.</li>
+          <li><b>Staff app</b> → the full-screen <b>Incoming Dispatch</b> appears. Hold <b>Accept</b> for 1 second.</li>
+          <li><b>Pilgrim app</b> now shows “Help is on the way — Ramesh Kumar”. <b>Command</b> shows “accepted · en route”.</li>
+          <li><b>Staff app</b> → add a note, then hold <b>Complete Task</b>. The alert resolves on Command and the pilgrim sees “Help reached you”.</li>
+          <li>Also try: staff <b>Field Report</b> → new alert on Command; Command <b>Emergency protocol</b> (top bar) → banner on both phones.</li>
+        </ol>
+      </div>
+      <div class="panel">
+        <h3>Open on a phone (same Wi-Fi)</h3>
+        <div class="qrs" id="qrs"><span class="muted">Looking up this laptop's network address…</span></div>
+        <p class="muted" style="margin-top:12px">If phones can't connect, allow Node.js through Windows Defender Firewall (Private networks) — the start script explains how.</p>
+        <div class="row" style="margin-top:12px">
+          <button class="btn btn--ghost" id="reset">Reset live demo data</button>
+          <a class="btn btn--ghost" href="/docs/MAP_COMPARISON.md" target="_blank" rel="noopener">Map API comparison</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <h3>Live activity</h3>
+      <ul class="log" id="log"><li class="muted">Waiting for activity…</li></ul>
+    </section>
+  </main>
+  <footer>RTIH_UI_01 Command · RTIH_UI_02 Field · RTIH_UI_03 Yatra — served by server/server.mjs (Node.js, no dependencies)</footer>
+
+  <script type="module">
+    import { encodeQR, qrPath } from './qr.js';
+    const APPS = [
+      { key: 'command', name: 'Pushkaralu Command', who: 'Command Centre dashboard · desktop', colour: '#1E3A5F', desc: 'Camera grid, live alert queue, GIS map with 3D view, staff dispatch and emergency protocol.', icon: '<path d="M3 5h18v11H3z M8 20h8 M12 16v4" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>' },
+      { key: 'staff', name: 'Godavari Field', who: 'Staff & vendor app · phone', colour: '#2563EB', desc: 'Incoming dispatches, task flow with notes, zone map with 3D view, field reports and vendor inspections.', icon: '<rect x="7" y="2" width="10" height="20" rx="2" stroke="#fff" stroke-width="2" fill="none"/><path d="M11 18h2" stroke="#fff" stroke-width="2" stroke-linecap="round"/>' },
+      { key: 'pilgrim', name: 'Godavari Yatra', who: 'Pilgrim app · phone', colour: '#B45309', desc: 'Telugu-first registration, ghat slot booking with QR pass, family tracker, crowd map and one-hold SOS.', icon: '<path d="M4 15c3-3 5 3 8 0s5 3 8 0 M12 3v7 M9 7l3 3 3-3" stroke="#fff" stroke-width="2" fill="none" stroke-linecap="round"/>' },
+    ];
+    const $ = (s) => document.querySelector(s);
+    $('#apps').innerHTML = APPS.map((a) => `
+      <article class="card">
+        <div class="card__top"><span class="badge" style="background:${a.colour}"><svg width="24" height="24" viewBox="0 0 24 24" aria-hidden="true">${a.icon}</svg></span>
+          <div><h2>${a.name}</h2><div class="who">${a.who}</div></div></div>
+        <p>${a.desc}</p>
+        <div class="row"><span class="pill" data-pres="${a.key}"><i></i><span>0 open</span></span><span class="url">/${a.key}/</span></div>
+        <div class="row"><a class="btn btn--primary" href="/${a.key}/" target="_blank" rel="noopener">Open ${a.name.split(' ')[1]}</a></div>
+      </article>`).join('');
+
+    const pres = (p) => APPS.forEach((a) => {
+      const el = document.querySelector(`[data-pres="${a.key}"]`);
+      const n = p[a.key] || 0;
+      el.classList.toggle('on', n > 0);
+      el.querySelector('span').textContent = n ? `${n} open now` : 'not open';
+    });
+
+    const qr = (url) => { const m = encodeQR(url); const n = m.length + 8; return `<svg viewBox="0 0 ${n} ${n}" role="img" aria-label="QR code for ${url}"><path d="${qrPath(m)}" fill="#0F172A"/></svg>`; };
+    fetch('/api/lan').then((r) => r.json()).then(({ port, addresses }) => {
+      const host = addresses[0];
+      if (!host) { $('#qrs').innerHTML = '<span class="muted">No Wi-Fi/LAN address found — connect the laptop to a network (or a phone hotspot) and reload.</span>'; return; }
+      $('#qrs').innerHTML = ['staff', 'pilgrim', 'command'].map((k) => { const u = `http://${host}:${port}/${k}/`; return `<div class="qr">${qr(u)}<div><b>${k[0].toUpperCase() + k.slice(1)}</b></div><div class="url">${u}</div></div>`; }).join('');
+    });
+
+    const log = $('#log');
+    const t = (ms) => new Date(ms).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const add = (text, at = Date.now()) => { if (log.firstElementChild?.classList.contains('muted')) log.innerHTML = ''; log.insertAdjacentHTML('afterbegin', `<li><time>${t(at)}</time>${text.replace(/</g, '&lt;')}</li>`); };
+    fetch('/api/state').then((r) => r.json()).then((s) => { pres(s.presence); s.log.slice(0, 20).reverse().forEach((l) => add(l.text, l.t)); });
+    const es = new EventSource('/api/events?app=landing');
+    es.addEventListener('presence', (e) => pres(JSON.parse(e.data)));
+    es.addEventListener('hello', (e) => pres(JSON.parse(e.data).presence));
+    es.addEventListener('alert:new', (e) => { const a = JSON.parse(e.data); add(`New alert ${a.id} · ${a.title}`); });
+    es.addEventListener('task:new', (e) => { const x = JSON.parse(e.data); add(`Dispatch ${x.id} → ${x.staff.name}${x.staff.onApp ? ' (field app)' : ' (radio, simulated)'}`); });
+    es.addEventListener('task:update', (e) => { const x = JSON.parse(e.data); add(`${x.id} ${x.status}${x.declineReason ? ` — ${x.declineReason}` : ''}`); });
+    es.addEventListener('sos:update', (e) => { const s = JSON.parse(e.data); add(`${s.id} (${s.from}) → ${s.phase}`); });
+    es.addEventListener('broadcast', (e) => { const b = JSON.parse(e.data); add(`Broadcast · ${b.title}`); });
+    es.addEventListener('reset', () => { log.innerHTML = '<li class="muted">Demo data reset.</li>'; });
+    $('#reset').addEventListener('click', async () => { if (confirm('Clear all live SOS calls, dispatches and reports? Open apps will reload.')) await fetch('/api/reset', { method: 'POST' }); });
+  </script>
+</body>
+</html>

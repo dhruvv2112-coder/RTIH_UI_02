@@ -62,6 +62,14 @@ There are no dependencies and no build step: the app is plain ES modules and CSS
 
 On a phone the app runs full-bleed. On a desktop it appears inside a device frame, with a control panel for switching screens and simulating events. On mobile the same demo controls are in the **☰ menu**.
 
+## Live-linked local suite (all three apps on one laptop)
+
+[`suite/`](suite/) holds a zero-dependency Node.js server that serves **Pushkaralu Command** (RTIH_UI_01) at `/command/`, this app at `/staff/` and **Godavari Yatra** (RTIH_UI_03) at `/pilgrim/`, and links them live over REST + Server-Sent Events: pilgrim SOS → Command alert → dispatch → this app's Incoming Dispatch → accept / notes / complete → back to Command and the pilgrim. On Windows: install Node.js LTS, run `node suite/scripts/assemble.mjs` with the three repos cloned side by side, then double-click `suite/start-windows.bat`. See [suite/README.md](suite/README.md).
+
+The map screen also has a **3D** view (MapLibre GL + OpenFreeMap, no API key, needs internet). The map platform comparison is in [suite/docs/MAP_COMPARISON.md](suite/docs/MAP_COMPARISON.md).
+
+Served on its own (Vercel, `npm run dev`) the app detects there is no suite server and keeps its built-in simulated dispatches.
+
 ## Deploy (Vercel)
 
 The repo is linked to the Vercel project `rtih-ui-02` in the RITH team, with production at **https://rtih-ui-02.vercel.app**. There is no build step: the framework preset is Other and the repo root is served as-is. Pushes to `main` go to production, and other branches get preview URLs.

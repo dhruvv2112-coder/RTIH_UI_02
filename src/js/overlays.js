@@ -1,7 +1,7 @@
 // Task detail sheet (§5.1), dispatch overlay (§5.2), quick actions, decline reasons,
 // notifications (§8.2), menu, emergency.
 import { icon } from './icons.js';
-import { state, findTask, acceptTask, declineTask, addNote, escalateTask, nextDispatch, emit, unreadCount, setOnline } from './store.js';
+import { state, findTask, acceptTask, declineTask, addNote, escalateTask, nextDispatch, receiveDispatch, emit, unreadCount, setOnline, sink } from './store.js';
 import { FACILITY_META, KIND_META } from './data.js';
 import { esc, ago, istStamp, istHM, haptic, dispatchTone, longPress, $, $$ } from './util.js';
 import { openSheet, closeSheet, toast, layerEl, confirmModal, currentSheet } from './ui.js';
@@ -150,10 +150,12 @@ export function openDecline(id, { onCancel, onDone } = {}) {
 
 /* ---------- Dispatch overlay (§5.2) ---------- */
 let dispatchEl = null;
-export function openDispatch() {
-  if (dispatchEl) return;
+export const dispatchRecall = new Map(); // task id → close the overlay (Command recalled it)
+const pendingDispatch = [];
+export function openDispatch(incoming) {
+  if (dispatchEl) { if (incoming) { receiveDispatch(incoming); incoming.status = 'incoming'; pendingDispatch.push(incoming.id); emit('dispatch'); toast(`New dispatch queued · ${incoming.short}`, 'warning'); } return; }
   closeSheet(true);
-  const t = nextDispatch();
+  const t = incoming ? receiveDispatch(incoming) : nextDispatch();
   const high = t.priority !== 'urgent';
   haptic('alert'); dispatchTone(!high);
   const el = document.createElement('div');
@@ -191,7 +193,15 @@ export function openDispatch() {
     if (left <= 0) finish('auto');
   }, 250);
 
-  function close() { clearInterval(tick); el.style.transition = 'opacity 200ms'; el.style.opacity = '0'; setTimeout(() => { el.remove(); dispatchEl = null; emit('dispatch-close'); }, 200); }
+  function close() {
+    clearInterval(tick); el.style.transition = 'opacity 200ms'; el.style.opacity = '0';
+    setTimeout(() => {
+      el.remove(); dispatchEl = null; emit('dispatch-close');
+      const nextId = pendingDispatch.shift(); const nx = nextId && findTask(nextId);
+      if (nx && nx.status === 'incoming') { nx.status = 'dispatch'; openDispatch(nx); }
+    }, 200);
+  }
+  dispatchRecall.set(t.id, () => { if (dispatchEl === el) { close(); } });
   function finish(how) {
     if (!dispatchEl) return;
     t.status = 'incoming';
@@ -199,7 +209,7 @@ export function openDispatch() {
     close();
     haptic('medium');
     if (how === 'auto') toast('Auto-accepted · No response in 30s', 'warning');
-    else toast(r.queued ? 'Dispatch accepted — queued offline' : r.becameActive ? 'Dispatch accepted — navigate now' : 'Accepted — Up Next after current task', r.queued ? 'warning' : 'success');
+    else toast(r.queued ? 'Dispatch accepted — queued offline' : r.paused ? `Accepted — now active. ${r.paused.short || 'Previous task'} moved to Up Next` : r.becameActive ? 'Dispatch accepted — navigate now' : 'Accepted — Up Next after current task', r.queued ? 'warning' : 'success', r.paused ? 4200 : undefined);
   }
   const acc = $('#dAccept', el);
   longPress(acc, 1000, {
@@ -331,6 +341,8 @@ export function openEmergency() {
     </div>`;
   layerEl().append(el);
   $('#eCall', el).addEventListener('click', () => toast('Connecting to Command Centre…', 'info'));
-  $('#eCancel', el).addEventListener('click', () => { el.remove(); toast('SOS cancelled · Supervisor informed', 'info'); });
+  let sosId = null;
+  sink.sos?.().then((r) => { sosId = r?.sos?.id; if (sosId) toast('SOS received by Command Centre', 'success'); }).catch(() => {});
+  $('#eCancel', el).addEventListener('click', () => { el.remove(); if (sosId) sink.sosCancel?.(sosId); toast('SOS cancelled · Supervisor informed', 'info'); });
   state.notifications.unshift({ id: 'e' + Date.now(), type: 'emergency', title: 'EMERGENCY PROTOCOL', body: 'Emergency activated — Zone A', t: Date.now(), read: true });
 }

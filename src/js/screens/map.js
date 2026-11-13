@@ -156,6 +156,7 @@ export function renderMap() {
       <button class="map-ctl" data-zoom="-1" aria-label="Zoom out">${icon('minus')}</button>
       <button class="map-ctl" id="recentre" aria-label="Re-centre on my location">${icon('locate-fixed')}</button>
       <button class="map-ctl" id="legendBtn" aria-label="Show legend" aria-expanded="false">${icon('info')}</button>
+      <button class="map-ctl map-ctl--3d" id="map3dBtn" aria-label="3D view on real buildings (needs internet)" aria-pressed="false"><span class="t-caption-strong">3D</span></button>
     </div>
     ${t ? `
     <div class="task-strip" id="strip" role="region" aria-label="Active task">
@@ -199,6 +200,13 @@ export function bindMap(root) {
   $('#recentre', root).addEventListener('click', () => { haptic('light'); centreOn(USER); });
   const lb = $('#legendBtn', root), lg = $('#legend', root);
   lb.addEventListener('click', () => { lg.hidden = !lg.hidden; lb.setAttribute('aria-expanded', String(!lg.hidden)); });
+  $('#map3dBtn', root)?.addEventListener('click', async (e) => {
+    haptic('light');
+    const btn = e.currentTarget;
+    const m = await import('../map3d-staff.js');
+    const on = await m.toggle3D(document.getElementById('app'));
+    btn.setAttribute('aria-pressed', String(on));
+  });
 
   // One-finger pan, wheel zoom, double-tap zoom (§6.2)
   let drag = null, lastTap = 0;

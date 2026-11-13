@@ -72,3 +72,4 @@
   .task-strip { left: auto; top: 0; width: 300px; border-radius: var(--radius-lg) 0 0 var(--radius-lg); }
   .map-controls { right: 316px; bottom: var(--space-3); }
 }
+.map-ctl--3d[aria-pressed=true] { background: var(--color-brand-primary); color: var(--color-text-inverse, #fff); border-color: transparent; }
