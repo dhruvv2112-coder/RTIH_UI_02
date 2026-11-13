@@ -4,6 +4,8 @@ The interactive UI for the **RTIH AP Godavari Pushkaralu 2027 Staff & Vendor Mob
 
 The field staff it's for are Zone Marshals, Traffic Controllers, Medical Teams and Vendor Inspectors. They work 8–12 hour shifts outdoors, often in direct sunlight, with one hand free, sometimes wearing gloves, and with network coverage that comes and goes. Every screen is designed around those conditions.
 
+**Live app:** https://rtih-ui-02.vercel.app (deployed on Vercel; every push to `main` redeploys automatically)
+
 **Figma design:** [RTIH_UI_02 — Godavari Field Staff & Vendor App](https://www.figma.com/design/L0IhZZNuQwNLJpBzUgdLN6). It contains variables with Dark and Light modes, text and effect styles, 68 icon components, the component library, 8 screens, and 6 state/flow frames.
 
 ![Showcase](docs/screenshots/showcase.png)
@@ -62,9 +64,7 @@ On a phone the app runs full-bleed. On a desktop it appears inside a device fram
 
 ## Deploy (Vercel)
 
-1. Go to **vercel.com/new**, import `dhruvv2112-coder/RTIH_UI_02`.
-2. Set Framework Preset to **Other**. Leave the Build Command and Output Directory empty.
-3. Click Deploy. Every push to `main` redeploys automatically.
+The repo is linked to the Vercel project `rtih-ui-02` in the RITH team, with production at **https://rtih-ui-02.vercel.app**. There is no build step: the framework preset is Other and the repo root is served as-is. Pushes to `main` go to production, and other branches get preview URLs.
 
 `vercel.json` sets the security headers, the service-worker scope and asset caching.
 
