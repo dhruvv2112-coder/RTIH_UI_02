@@ -196,8 +196,11 @@ export function openCameraCapture(onPhoto, onFallback) {
 /** Photo as a JPEG data URL (for upload to the Command Centre). */
 export async function photoDataUrl(id) {
   const m = media.get(id); if (!m?.url) return null;
-  const blob = await fetch(m.url).then((r) => r.blob());
-  return await new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(blob); });
+  const bmp = await createImageBitmap(await fetch(m.url).then((r) => r.blob()));
+  const k = Math.min(1, 1024 / Math.max(bmp.width, bmp.height)); // keep uploads small (cloud hub limit)
+  const c = document.createElement('canvas'); c.width = bmp.width * k; c.height = bmp.height * k;
+  c.getContext('2d').drawImage(bmp, 0, 0, c.width, c.height);
+  return c.toDataURL('image/jpeg', 0.7);
 }
 
 async function compress(file) {
