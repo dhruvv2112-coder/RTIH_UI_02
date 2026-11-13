@@ -1,6 +1,6 @@
 // Minimal reactive store with offline queue semantics (Brief §7).
 // Mirrors the Zustand + MMKV shape planned for the React Native build.
-import { seedTasks, seedNotifications, CHECKLIST, STAFF, DISPATCH_POOL } from './data.js';
+import { seedTasks, seedNotifications, CHECKLIST, STAFF, DISPATCH_POOL, RESOURCES } from './data.js';
 
 const KEY = 'rtih.godavari-field.v2'; // v2: light theme default
 const listeners = new Set();
@@ -120,7 +120,9 @@ function stamp(task, action, label) {
 
 export function acceptTask(id) {
   const t = findTask(id); if (!t) return;
-  const hasActive = !!activeTask();
+  let hasActive = !!activeTask();
+  // A pilgrim SOS from the hub pre-empts the current task (which moves to Up Next).
+  if (hasActive && t.hub && t.priority === 'urgent') { activeTask().status = 'accepted'; hasActive = false; }
   t.status = hasActive ? 'accepted' : 'active';
   t.acceptedAt = Date.now();
   t.progress = t.progress || 0;
@@ -170,11 +172,19 @@ export function escalateTask(id) {
   return { queued };
 }
 
-export function nextDispatch() {
-  const base = DISPATCH_POOL[state.dispatchIdx % DISPATCH_POOL.length];
-  state.dispatchIdx += 1;
-  const n = String(420 + state.dispatchIdx).padStart(4, '0');
-  const task = { ...structuredClone(base), id: `TSK-27-${n}`, status: 'dispatch', dispatchedAt: Date.now(), notes: [] };
+export function nextDispatch(injected) {
+  let task;
+  if (injected) {
+    // Live dispatch from the Godavari Hub (pilgrim SOS or Command Centre).
+    task = { resources: RESOURCES.ghat3, ...structuredClone(injected), status: 'dispatch', dispatchedAt: Date.now(), notes: injected.notes || [] };
+    if (!task.resources?.length) task.resources = RESOURCES.ghat3;
+    state.tasks = state.tasks.filter((x) => x.id !== task.id);
+  } else {
+    const base = DISPATCH_POOL[state.dispatchIdx % DISPATCH_POOL.length];
+    state.dispatchIdx += 1;
+    const n = String(420 + state.dispatchIdx).padStart(4, '0');
+    task = { ...structuredClone(base), id: `TSK-27-${n}`, status: 'dispatch', dispatchedAt: Date.now(), notes: [] };
+  }
   state.tasks.unshift(task);
   state.notifications.unshift({ id: 'n' + Date.now(), type: task.priority === 'urgent' ? 'urgent' : 'normal', title: task.priority === 'urgent' ? 'Urgent Dispatch' : 'New Task Assigned', body: `${task.short} — ${task.location}`, t: Date.now(), read: false });
   emit('dispatch');
@@ -183,6 +193,7 @@ export function nextDispatch() {
 
 /* ---------- report & inspection ---------- */
 export function submitReport() {
+  state.lastReport = { ...state.report, photos: state.report.photos.length, t: Date.now() }; // picked up by live.js
   const queued = enqueue('POST /reports', 'Field report');
   state.session.reports += 1;
   state.report = freshReport();

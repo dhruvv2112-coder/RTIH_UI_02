@@ -198,6 +198,9 @@ render();
 if (!navigator.onLine) setOnline(false);
 
 // Offline shell (P4)
-if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+if ('serviceWorker' in navigator && window.isSecureContext) {
+  addEventListener('load', () => navigator.serviceWorker.register('sw.js').catch(() => {}));
 }
+
+// Godavari Hub (local server): live dispatches, task sync, report upload, pilgrim-pass verification.
+import('./live.js').then((m) => m.startLive()).catch(() => {});

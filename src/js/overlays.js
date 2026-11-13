@@ -150,10 +150,16 @@ export function openDecline(id, { onCancel, onDone } = {}) {
 
 /* ---------- Dispatch overlay (§5.2) ---------- */
 let dispatchEl = null;
-export function openDispatch() {
-  if (dispatchEl) return;
+const pendingDispatch = [];
+/** Close the incoming-dispatch overlay if it is showing this task (e.g. pilgrim cancelled the SOS). */
+export function dismissDispatch(id) {
+  if (dispatchEl && dispatchEl.dataset.task === id) dispatchEl._close?.();
+  const i = pendingDispatch.findIndex((x) => x.id === id); if (i >= 0) pendingDispatch.splice(i, 1);
+}
+export function openDispatch(injected) {
+  if (dispatchEl) { if (injected) pendingDispatch.push(injected); return; }
   closeSheet(true);
-  const t = nextDispatch();
+  const t = nextDispatch(injected);
   const high = t.priority !== 'urgent';
   haptic('alert'); dispatchTone(!high);
   const el = document.createElement('div');
@@ -177,6 +183,7 @@ export function openDispatch() {
       <button class="btn btn--outline-danger btn--xl btn--block t-button" id="dDecline">${icon('x', { stroke: 3 })}Decline<span class="hold__hint">(with reason)</span></button>
       <div class="countdown t-caption" aria-live="polite"><span id="dCount">Auto-accept in 30s if no response</span><div class="countdown__track"><div class="countdown__fill" id="dBar"></div></div></div>
     </div>`;
+  el.dataset.task = t.id;
   layerEl().append(el);
   dispatchEl = el;
   emit('dispatch-open');
@@ -191,7 +198,14 @@ export function openDispatch() {
     if (left <= 0) finish('auto');
   }, 250);
 
-  function close() { clearInterval(tick); el.style.transition = 'opacity 200ms'; el.style.opacity = '0'; setTimeout(() => { el.remove(); dispatchEl = null; emit('dispatch-close'); }, 200); }
+  function close() {
+    clearInterval(tick); el.style.transition = 'opacity 200ms'; el.style.opacity = '0';
+    setTimeout(() => {
+      el.remove(); dispatchEl = null; emit('dispatch-close');
+      const nx = pendingDispatch.shift(); if (nx) setTimeout(() => openDispatch(nx), 500);
+    }, 200);
+  }
+  el._close = close;
   function finish(how) {
     if (!dispatchEl) return;
     t.status = 'incoming';
@@ -270,6 +284,7 @@ export function openMenu() {
     html: `<div style="display:flex;align-items:center;gap:12px;margin-bottom:16px"><div class="avatar" style="width:44px;height:44px;margin:0;font-size:16px;box-shadow:none">RK</div><div><div class="t-h3">Ramesh Kumar</div><div class="t-caption c-secondary">Zone Marshal · Zone A · On shift</div></div></div>
       <div class="option-list">
         <button class="option option--danger" data-m="sos">${icon('phone-call')}<span><span class="t-body-strong" style="display:block">SOS Emergency</span><span class="t-caption c-secondary">Alerts supervisor & Command Centre</span></span></button>
+        <button class="option" data-m="verify">${icon('check-circle-2')}<span><span class="t-body-strong" style="display:block">Verify Pilgrim Pass</span><span class="t-caption c-secondary">Scan or type the booking ID from the pilgrim's QR</span></span></button>
         <button class="option" data-m="scan">${icon('scan-line')}<span><span class="t-body-strong" style="display:block">Scan Vendor QR</span><span class="t-caption c-secondary">Open a stall's license & inspection</span></span></button>
         <button class="option" data-m="glasses">${icon('camera')}<span><span class="t-body-strong" style="display:block">Smart Glasses Upload</span><span class="t-caption c-secondary">Images go to S1 — you see results only</span></span></button>
       </div>
@@ -281,6 +296,7 @@ export function openMenu() {
       </div>`,
     onMount: (sheet) => {
       $('[data-m="sos"]', sheet).addEventListener('click', () => { closeSheet(true); openEmergency(); });
+      $('[data-m="verify"]', sheet).addEventListener('click', () => { closeSheet(true); actions.openVerify?.(); });
       $('[data-m="scan"]', sheet).addEventListener('click', () => { closeSheet(); toast('QR matched · Stall #47 — Sri Lakshmi Foods', 'success'); setTimeout(() => actions.navigate('inspection'), 400); });
       $('[data-m="glasses"]', sheet).addEventListener('click', () => { closeSheet(true); openGlasses(); });
       $('[data-m="dispatch"]', sheet).addEventListener('click', () => { closeSheet(true); openDispatch(); });
@@ -330,7 +346,8 @@ export function openEmergency() {
       <button class="btn btn--ghost btn--xl btn--block" id="eCancel">I'm safe — cancel SOS</button>
     </div>`;
   layerEl().append(el);
-  $('#eCall', el).addEventListener('click', () => toast('Connecting to Command Centre…', 'info'));
-  $('#eCancel', el).addEventListener('click', () => { el.remove(); toast('SOS cancelled · Supervisor informed', 'info'); });
+  $('#eCall', el).addEventListener('click', () => { toast('Connecting to Command Centre…', 'info'); location.href = 'tel:+918832420270'; });
+  $('#eCancel', el).addEventListener('click', () => { el.remove(); toast('SOS cancelled · Supervisor informed', 'info'); actions.onStaffSOSCancel?.(); });
+  actions.onStaffSOS?.();
   state.notifications.unshift({ id: 'e' + Date.now(), type: 'emergency', title: 'EMERGENCY PROTOCOL', body: 'Emergency activated — Zone A', t: Date.now(), read: true });
 }

@@ -22,8 +22,9 @@ const walk = (file) => {
 walk(join(root, 'src/js/app.js'));
 
 const sw = readFileSync(join(root, 'sw.js'), 'utf8');
-for (const [, ref] of sw.matchAll(/'(\/[^']*)'/g)) if (ref !== '/' && !existsSync(join(root, ref))) fail(`sw.js precache → ${ref}`);
-const jsModules = [...seen].map((f) => '/' + f.replace(root, '').replace(/\\/g, '/'));
+const precache = (sw.match(/const ASSETS = \[([\s\S]*?)\];/) || [, ''])[1];
+for (const [, ref] of precache.matchAll(/'([^']*)'/g)) if (ref !== './' && !existsSync(join(root, ref))) fail(`sw.js precache → ${ref}`);
+const jsModules = [...seen].map((f) => f.replace(root, '').replace(/\\/g, '/').replace(/^\//, ''));
 for (const m of jsModules) if (!sw.includes(`'${m}'`)) fail(`sw.js does not precache ${m}`);
 
 console.log(failed ? `${failed} problem(s)` : `✓ ${seen.size} modules, all references resolve and are precached`);
