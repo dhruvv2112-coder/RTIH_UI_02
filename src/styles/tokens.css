@@ -3,6 +3,8 @@
    Source of truth: docs/brief/UI_BRIEF.md §2 (mirrored in tokens/tokens.json)
    ========================================================================== */
 
+/* Base values = dark palette; the light block overrides them.
+   Light (day) is the DEFAULT theme: <html data-theme="light"> + store default. Dark is the user toggle. */
 :root,
 [data-theme="dark"] {
   /* 2.1 Colour — Dark (default) */
@@ -21,6 +23,11 @@
   --color-status-critical: #F85149;
   --color-status-info: #58A6FF;
   --color-status-radar: #A371F7;
+  /* Status colours used as TEXT/ICON (same as fills in dark) */
+  --color-status-normal-fg: #3FB950;
+  --color-status-warning-fg: #D29922;
+  --color-status-critical-fg: #F85149;
+  --color-status-info-fg: #58A6FF;
   --color-surface-task-urgent: #2D1B1B;
   --color-surface-task-active: #1B2D1E;
   --color-surface-task-pending: #2D2B1B;
@@ -57,6 +64,12 @@
   --color-text-tertiary: #6E7781;
   --color-text-inverse: #FFFFFF;
   --color-border-default: #D0D7DE;
+  --color-brand-secondary: #0969DA;
+  /* Darker status tones for text/icons on white — fills keep the brief's hex values */
+  --color-status-normal-fg: #1A7F37;
+  --color-status-warning-fg: #9A6700;
+  --color-status-critical-fg: #CF222E;
+  --color-status-info-fg: #0969DA;
   --color-surface-task-urgent: #FFEBE9;
   --color-surface-task-active: #DAFBE1;
   --color-surface-task-pending: #FFF8C5;

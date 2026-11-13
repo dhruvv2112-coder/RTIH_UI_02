@@ -13,15 +13,15 @@ The field staff it's for are Zone Marshals, Traffic Controllers, Medical Teams a
 | Tasks | Task sheet | Zone Map | Field Report | Inspection |
 |---|---|---|---|---|
 | ![](docs/screenshots/01-tasks.png) | ![](docs/screenshots/02-task-sheet.png) | ![](docs/screenshots/03-map.png) | ![](docs/screenshots/04-report.png) | ![](docs/screenshots/05-inspection.png) |
-| **Profile & Shift** | **Dispatch overlay** | **Login** | **Offline** | **Light theme** |
-| ![](docs/screenshots/06-profile.png) | ![](docs/screenshots/07-dispatch.png) | ![](docs/screenshots/08-login.png) | ![](docs/screenshots/09-offline.png) | ![](docs/screenshots/10-light-tasks.png) |
+| **Profile & Shift** | **Dispatch overlay** | **Login** | **Offline** | **Dark theme (toggle)** |
+| ![](docs/screenshots/06-profile.png) | ![](docs/screenshots/07-dispatch.png) | ![](docs/screenshots/08-login.png) | ![](docs/screenshots/09-offline.png) | ![](docs/screenshots/10-dark-tasks.png) |
 
 ## What's inside
 
 | Brief section | Implemented |
 |---|---|
 | §1 Principles P1–P6 | Primary actions within 3 taps, 48px+ targets, thumb-zone actions, dark default, offline queue, haptic patterns, `prefers-reduced-motion` |
-| §2 Tokens | `src/styles/tokens.css` ↔ `tokens/tokens.json` (W3C DTCG). Dark and light themes. Contrast checked by tests |
+| §2 Tokens | `src/styles/tokens.css` ↔ `tokens/tokens.json` (W3C DTCG). **Light (day) theme is the default**; dark is a toggle in Profile. Contrast checked by tests |
 | §3 Shell | 56px header (menu/back, centred title, bell + badge, gear), 64px tab bar with active pill and badge, animated offline → syncing → synced bar |
 | §4.1 Tasks | Active card (progress, Navigate, **hold-to-Complete**, 1s long-press quick actions, swipe right → details). Incoming cards swipe **right = Accept / left = Decline + reason** (80px threshold, scaled underlay, haptic). Up Next, Completed Today, pull-to-refresh, SOS (1.5s hold) |
 | §4.2 Zone Map | Offline vector map: blue pulse "you", bouncing task pin, facilities, crowd heatmap, **radar zones shown as counts + flow arrows only** (privacy §1.3), zoom/re-centre/legend, layer toggles (Staff = Supervisor only), draggable active-task strip |

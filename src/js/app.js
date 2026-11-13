@@ -178,7 +178,7 @@ function buildPanel() {
 function syncPanel() {
   $$('[data-go]').forEach((b) => b.setAttribute('aria-pressed', String(state.authed ? b.dataset.go === state.route : b.dataset.go === 'login')));
   const net = $('#ctlNet'); if (net) { net.setAttribute('aria-pressed', String(!state.online)); net.querySelector('span').textContent = state.online ? 'Go offline' : 'Reconnect'; }
-  const th = $('#ctlTheme'); if (th) { th.setAttribute('aria-pressed', String(state.theme === 'light')); th.querySelector('span').textContent = state.theme === 'dark' ? 'Light theme' : 'Dark theme'; }
+  const th = $('#ctlTheme'); if (th) { th.setAttribute('aria-pressed', String(state.theme === 'dark')); th.querySelector('span').textContent = state.theme === 'dark' ? 'Light theme' : 'Dark theme'; }
 }
 
 /* ---------- boot ---------- */

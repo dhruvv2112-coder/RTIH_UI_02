@@ -36,10 +36,10 @@ svg { display: block; flex-shrink: 0; }
 .c-primary { color: var(--color-text-primary); }
 .c-secondary { color: var(--color-text-secondary); }
 .c-tertiary { color: var(--color-text-tertiary); }
-.c-normal { color: var(--color-status-normal); }
-.c-warning { color: var(--color-status-warning); }
-.c-critical { color: var(--color-status-critical); }
-.c-info { color: var(--color-status-info); }
+.c-normal { color: var(--color-status-normal-fg); }
+.c-warning { color: var(--color-status-warning-fg); }
+.c-critical { color: var(--color-status-critical-fg); }
+.c-info { color: var(--color-status-info-fg); }
 .regional { font-family: var(--font-regional); }
 
 /* ==========================================================================

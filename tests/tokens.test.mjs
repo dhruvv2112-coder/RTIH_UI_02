@@ -36,6 +36,12 @@ test('light: primary/secondary text pass', () => {
   assert.ok(contrast(L['text-secondary'], L['bg-primary']) >= 4.5);
 });
 
+test('light (default): status text tokens and brand text pass AA on white and secondary surface', () => {
+  for (const k of ['status-normal-fg', 'status-warning-fg', 'status-critical-fg', 'status-info-fg', 'brand-secondary']) {
+    for (const bg of ['bg-primary', 'bg-secondary']) assert.ok(contrast(L[k], L[bg]) >= 4.5, `${k} on ${bg} = ${contrast(L[k], L[bg]).toFixed(2)}`);
+  }
+});
+
 test('every JSON colour token exists in tokens.css with the same value', () => {
   for (const [k, v] of Object.entries(tokens.color.dark)) {
     const m = css.match(new RegExp(`--color-${k}:\\s*([^;]+);`));

@@ -2,6 +2,11 @@
 
 Source of truth: [Brief §2](brief/UI_BRIEF.md). The tokens live in `src/styles/tokens.css` (web) and `tokens/tokens.json` (W3C DTCG, for Figma variables and React Native `tokens/*.ts`). `tests/tokens.test.mjs` keeps the two files in sync.
 
+## Default theme: Light (day)
+The app opens in the **Light** theme, and Dark is a toggle under Profile → Settings. This was a project decision that overrides the brief's “dark default” (P6): a day theme reads better in direct sunlight at the ghats. The Dark palette is unchanged and still saves battery on OLED screens when staff switch to it.
+
+In Light, status **fills** keep the brief's hex values. Status **text and icons** use darker `--color-status-*-fg` tones (#1A7F37 green, #9A6700 amber, #CF222E red, #0969DA blue), and brand text uses #0969DA. All of them reach at least 4.5:1 on white, which `tests/tokens.test.mjs` checks.
+
 ## Colour: measured contrast on `--color-bg-primary` #0D1117
 
 | Token | Hex | Ratio | Used as |

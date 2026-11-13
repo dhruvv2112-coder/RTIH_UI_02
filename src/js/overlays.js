@@ -42,7 +42,7 @@ function detailHTML(t) {
       <div class="btn-row btn-row--3" style="margin-top:16px">
         <button class="btn btn--outline btn--sm" data-d="nav">${icon('navigation')}Navigate</button>
         <button class="btn btn--ghost btn--sm" data-d="call">${icon('phone')}Call</button>
-        <button class="btn btn--ghost btn--sm" data-d="esc" style="color:var(--color-status-warning)">${icon('arrow-up-circle')}Escalate</button>
+        <button class="btn btn--ghost btn--sm" data-d="esc" style="color:var(--color-status-warning-fg)">${icon('arrow-up-circle')}Escalate</button>
       </div>` : ''}
     ${!readOnly || notes ? `
       <div class="sheet-label t-caption-strong" style="text-transform:uppercase">Notes ${readOnly ? '' : '<span class="c-tertiary" style="text-transform:none;font-weight:400">(tap to add)</span>'}</div>

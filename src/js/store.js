@@ -2,7 +2,7 @@
 // Mirrors the Zustand + MMKV shape planned for the React Native build.
 import { seedTasks, seedNotifications, CHECKLIST, STAFF, DISPATCH_POOL } from './data.js';
 
-const KEY = 'rtih.godavari-field.v1';
+const KEY = 'rtih.godavari-field.v2'; // v2: light theme default
 const listeners = new Set();
 
 function freshReport() {
@@ -15,7 +15,7 @@ function freshInspection() {
 function initial() {
   return {
     authed: true,
-    theme: 'dark',
+    theme: 'light', // day theme by default (outdoor glare); dark is a Profile toggle
     lang: 'en',
     online: true,
     sync: 'idle', // idle | syncing | synced

@@ -209,7 +209,7 @@ function startRecording(wrap) {
     <span class="voice__rec" aria-hidden="true"></span>
     <div class="wave is-live">${waveBars(seed, 34, true)}</div>
     <span class="voice__time t-mono" id="vtime" aria-live="off">0:00</span>
-    <button class="voice__btn" id="vstop" aria-label="Stop recording" style="color:var(--color-status-critical)">${icon('square')}</button></div>`;
+    <button class="voice__btn" id="vstop" aria-label="Stop recording" style="color:var(--color-status-critical-fg)">${icon('square')}</button></div>`;
   const time = $('#vtime', wrap);
   const stop = () => {
     clearInterval(rec?.timer); rec = null;
