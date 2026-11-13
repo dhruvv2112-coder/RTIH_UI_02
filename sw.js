@@ -5,7 +5,7 @@ const CACHE = 'godavari-field-v3';
 const ASSETS = [
   './', 'index.html', 'manifest.webmanifest', 'assets/icon.svg',
   'src/styles/tokens.css', 'src/styles/base.css', 'src/styles/components.css', 'src/styles/screens.css',
-  'src/js/app.js', 'src/js/store.js', 'src/js/data.js', 'src/js/icons.js', 'src/js/util.js', 'src/js/ui.js', 'src/js/bus.js', 'src/js/overlays.js', 'src/js/live.js',
+  'src/js/app.js', 'src/js/store.js', 'src/js/data.js', 'src/js/icons.js', 'src/js/util.js', 'src/js/ui.js', 'src/js/bus.js', 'src/js/overlays.js', 'src/js/live.js', 'src/js/map3d.js',
   'src/js/screens/tasks.js', 'src/js/screens/map.js', 'src/js/screens/report.js', 'src/js/screens/inspection.js', 'src/js/screens/profile.js',
 ];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)).then(() => self.skipWaiting())); });

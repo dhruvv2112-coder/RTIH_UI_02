@@ -7,6 +7,16 @@ import { MAP_FACILITIES, RADAR_ZONES, FACILITY_META } from '../data.js';
 import { esc, haptic, $, $$ } from '../util.js';
 import { toast } from '../ui.js';
 import { actions } from '../bus.js';
+import { create3D, makeTransform, injectMarkerCSS, GHAT_GEO } from '../map3d.js';
+
+// Zone A schematic (1100 × 900) → WGS84: Ghat #3 = Main Ghat #3, ghats run along the bank towards
+// Saraswati Ghat, river to the west (up on the schematic). ~1.3 m per unit.
+const toGeo = makeTransform({ LAT0: 17.00702267, LNG0: 81.76313321, A: -0.0000110729, B: 0.0000036644, C: 0.0000038303, D: 0.000011574 });
+const FAC_COLOUR = { medical: '#DC2626', toilet: '#2563EB', kiosk: '#7C3AED', vending: '#059669', water: '#0891B2' };
+let mode3d = true; // live 3D city by default when online; schematic map offline / on request
+let m3 = null;
+let host = null; // the MapLibre container survives screen re-renders (moved into each new #m3)
+let loading = false;
 
 const W = 1100, H = 900;
 const USER = { x: 500, y: 478 };
@@ -138,6 +148,7 @@ export function renderMap() {
   return `
   <div class="map-screen screen-enter">
     <div class="map-viewport" id="mapvp">${mapSVG()}</div>
+    <div class="m3-wrap" id="m3" hidden><span class="m3-badge">Loading 3D city…</span></div>
     <div class="map-chips">
       <span class="map-chip">${icon('users')}<span><b>Crowd</b> · live 10s</span></span>
       <span class="map-chip">${icon(state.online ? 'wifi' : 'wifi-off')}<span>${state.online ? 'Offline tiles ready' : 'Offline tiles'}</span></span>
@@ -152,6 +163,7 @@ export function renderMap() {
       <div class="lg"><i style="background:var(--color-status-normal);border-radius:50%"></i>Vending / Water</div>
     </div>
     <div class="map-controls">
+      <button class="map-ctl map-ctl--3d" id="toggle3d" aria-pressed="${mode3d && state.online}" aria-label="Switch between live 3D city and offline zone map"><span style="font:800 13px var(--font-sans, Inter)">${mode3d && state.online ? '3D' : '2D'}</span></button>
       <button class="map-ctl" data-zoom="1" aria-label="Zoom in">${icon('plus')}</button>
       <button class="map-ctl" data-zoom="-1" aria-label="Zoom out">${icon('minus')}</button>
       <button class="map-ctl" id="recentre" aria-label="Re-centre on my location">${icon('locate-fixed')}</button>
@@ -195,8 +207,16 @@ export function bindMap(root) {
     const ns = Math.min(4, Math.max(0.8, view.s * factor));
     view.x = cx - (cx - view.x) * (ns / view.s); view.y = cy - (cy - view.y) * (ns / view.s); view.s = ns; apply(true);
   };
-  $$('[data-zoom]', root).forEach((b) => b.addEventListener('click', () => { haptic('light'); zoomAt(b.dataset.zoom === '1' ? 1.4 : 1 / 1.4); }));
-  $('#recentre', root).addEventListener('click', () => { haptic('light'); centreOn(USER); });
+  $$('[data-zoom]', root).forEach((b) => b.addEventListener('click', () => { haptic('light'); if (m3) return b.dataset.zoom === '1' ? m3.zoomIn() : m3.zoomOut(); zoomAt(b.dataset.zoom === '1' ? 1.4 : 1 / 1.4); }));
+  $('#recentre', root).addEventListener('click', () => { haptic('light'); if (m3) return m3.flyTo(toGeo(USER.x, USER.y), 17.3); centreOn(USER); });
+  const tg = $('#toggle3d', root);
+  tg.addEventListener('click', () => {
+    haptic('light');
+    mode3d = !m3;
+    tg.setAttribute('aria-pressed', String(mode3d)); tg.firstElementChild.textContent = mode3d ? '3D' : '2D';
+    mode3d ? start3D(root) : stop3D(root);
+  });
+  if (mode3d && state.online) start3D(root); else { tg.setAttribute('aria-pressed', 'false'); tg.firstElementChild.textContent = '2D'; }
   const lb = $('#legendBtn', root), lg = $('#legend', root);
   lb.addEventListener('click', () => { lg.hidden = !lg.hidden; lb.setAttribute('aria-expanded', String(!lg.hidden)); });
 
@@ -216,6 +236,7 @@ export function bindMap(root) {
   const t = activeTask();
   $('#go', root)?.addEventListener('click', () => {
     haptic('medium');
+    if (m3) { route3D(t); toast(`Walking route · ${t.distance}m via promenade`, 'info'); return; }
     centreOn({ x: (USER.x + t.pin.x) / 2, y: (USER.y + t.pin.y) / 2 });
     svg.classList.add('is-navigating');
     toast(`Walking route · ${t.distance}m via promenade`, 'info');
@@ -229,6 +250,83 @@ export function bindMap(root) {
     strip.addEventListener('pointerdown', (e) => { if (!e.target.closest('button')) sy = e.clientY; });
     strip.addEventListener('pointerup', (e) => { if (sy != null && (sy - e.clientY > 30 || Math.abs(sy - e.clientY) < 6)) actions.openTask(t.id, { snap: 0.85 }); sy = null; });
   }
+}
+
+/* ---------- live 3D city (MapLibre + OpenFreeMap) ---------- */
+const taskGeo = (t) => (t.geo ? [t.geo.lng, t.geo.lat] : toGeo(t.pin.x, t.pin.y));
+async function start3D(root) {
+  const wrap = $('#m3', root);
+  if (!wrap) return;
+  injectMarkerCSS();
+  wrap.hidden = false;
+  const badge = $('.m3-badge', wrap);
+  if (host) {
+    wrap.prepend(host);
+    if (m3) { badge.textContent = 'Live 3D · OpenStreetMap'; m3.resize(); draw3D(); }
+    return;
+  }
+  if (loading) return;
+  loading = true;
+  host = document.createElement('div');
+  host.style.cssText = 'position:absolute;inset:0';
+  wrap.prepend(host);
+  try {
+    const t = activeTask();
+    const me = toGeo(USER.x, USER.y);
+    m3 = await create3D(host, { center: t?.pin ? [(me[0] + taskGeo(t)[0]) / 2, (me[1] + taskGeo(t)[1]) / 2] : me, zoom: 16.6, pitch: 62, bearing: -20 });
+    const cur = host.parentElement;
+    if (cur) $('.m3-badge', cur).textContent = 'Live 3D · OpenStreetMap';
+    m3.resize();
+    draw3D();
+  } catch (err) {
+    host = null;
+    badge.textContent = `3D unavailable — ${err.message}. Showing offline map.`;
+    badge.classList.add('is-err');
+    setTimeout(() => stop3D(root), 2500);
+  } finally { loading = false; }
+}
+function stop3D(root) {
+  m3?.destroy(); m3 = null; host?.remove(); host = null;
+  const wrap = $('#m3', root); if (wrap) wrap.hidden = true;
+  const tg = $('#toggle3d', root); if (tg) { tg.setAttribute('aria-pressed', 'false'); tg.firstElementChild.textContent = '2D'; }
+}
+function draw3D() {
+  if (!m3) return;
+  const L = state.layers, t = activeTask(), items = [];
+  m3.setGeo('radar', 'fill', L.radar ? RADAR_ZONES.map((z) => {
+    const pts = [...z.path.matchAll(/(\d+) (\d+)/g)].map((m) => toGeo(+m[1], +m[2]));
+    return { type: 'Feature', properties: {}, geometry: { type: 'Polygon', coordinates: [[...pts, pts[0]]] } };
+  }) : [], { 'fill-color': '#8B5CF6', 'fill-opacity': 0.28 });
+  m3.setGeo('crowd', 'circle', L.crowd ? [[560, 380, 2], [705, 365, 2], [440, 390, 1], [820, 420, 1], [330, 400, 0], [600, 560, 0], [880, 600, 0]].map(([x, y, l]) => ({ type: 'Feature', properties: { l }, geometry: { type: 'Point', coordinates: toGeo(x, y) } })) : [],
+    { 'circle-radius': ['interpolate', ['exponential', 2], ['zoom'], 14, 10, 19, 260], 'circle-color': ['match', ['get', 'l'], 2, '#EF4444', 1, '#F59E0B', '#22C55E'], 'circle-opacity': 0.3, 'circle-blur': 0.8, 'circle-pitch-alignment': 'map' });
+  for (const g of Object.values(GHAT_GEO)) {
+    const el = document.createElement('div'); el.className = 'm3-tag'; el.textContent = g.name;
+    items.push({ el, at: g.at, anchor: 'top' });
+  }
+  if (L.facilities) for (const f of MAP_FACILITIES) {
+    const el = document.createElement('div'); el.className = 'm3-fac'; el.style.background = FAC_COLOUR[f.kind] || '#1E3A5F'; el.title = f.name;
+    items.push({ el, at: toGeo(f.x, f.y) });
+  }
+  if (L.radar) for (const z of RADAR_ZONES) {
+    const el = document.createElement('div'); el.className = 'm3-tag'; el.style.color = z.count > z.cap ? '#DC2626' : '#5B21B6';
+    el.textContent = `${z.count.toLocaleString('en-IN')} · RADAR ONLY ${z.id}`;
+    items.push({ el, at: toGeo(z.cx, z.cy - 40) });
+  }
+  const me = document.createElement('div'); me.className = 'm3-me'; me.title = 'You';
+  items.push({ el: me, at: toGeo(USER.x, USER.y) });
+  if (t?.pin) {
+    const el = document.createElement('div'); el.className = `m3-alert ${t.priority === 'urgent' ? 'is-crit' : ''}`;
+    el.style.background = t.priority === 'high' ? '#D97706' : '#DC2626'; el.innerHTML = '<i>!</i>'; el.title = t.location;
+    items.push({ el, at: taskGeo(t), anchor: 'bottom', onClick: () => actions.openTask(t.id, { snap: 0.85 }) });
+  }
+  m3.setMarkers(items);
+}
+function route3D(t) {
+  if (!m3 || !t?.pin) return;
+  const a = toGeo(USER.x, USER.y), b = taskGeo(t), mid = toGeo((USER.x + t.pin.x) / 2 + 40, (USER.y + t.pin.y) / 2 + 30);
+  const pts = t.geo ? [a, b] : [a, mid, b];
+  m3.setGeo('route', 'line', [{ type: 'Feature', properties: {}, geometry: { type: 'LineString', coordinates: pts } }], { 'line-color': '#2563EB', 'line-width': 5, 'line-dasharray': [1, 1.5] }, { 'line-cap': 'round' });
+  m3.fit([[Math.min(a[0], b[0]), Math.min(a[1], b[1])], [Math.max(a[0], b[0]), Math.max(a[1], b[1])]], 90);
 }
 
 export function layersPanel() {
