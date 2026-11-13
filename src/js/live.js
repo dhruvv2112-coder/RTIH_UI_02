@@ -36,7 +36,7 @@ export async function startLive() {
   for (const t of state.tasks) if (t.hub) sent.set(t.id, snap(t));
   connect();
   subscribe(onLocalChange);
-  actions.onStaffSOS = () => api('/api/alerts', { type: 'medical', severity: 'critical', zone: 'A', title: `Staff SOS — ${STAFF_NAME}`, desc: 'Zone Marshal pressed SOS on the Field app · Ghat #3, Zone A', source: 'Field app SOS', lat: 16.99809, lng: 81.77297 }).catch(() => {});
+  actions.onStaffSOS = () => api('/api/alerts', { type: 'medical', severity: 'critical', zone: 'A', title: `Staff SOS — ${STAFF_NAME}`, desc: 'Zone Marshal pressed SOS on the Field app · Ghat #3, Zone A', source: 'Field app SOS', lat: 17.0016, lng: 81.7689 }).catch(() => {});
   actions.onStaffSOSCancel = () => {};
   toast('Connected to Command Centre (Godavari Hub)', 'info', 2200);
 }
@@ -92,7 +92,7 @@ function onLocalChange(reason) {
   if (reason === 'report' && state.lastReport && !state.lastReport.sent) {
     const r = state.lastReport;
     r.sent = true;
-    api('/api/reports', { type: r.type, severity: r.severity, description: r.description, photos: r.photos, zone: 'A', lat: 16.99809, lng: 81.77297, by: STAFF_NAME })
+    api('/api/reports', { type: r.type, severity: r.severity, description: r.description, photos: r.photos, zone: 'A', lat: 17.0016, lng: 81.7689, by: STAFF_NAME })
       .then((x) => x.ok && toast('Report received by Command Centre', 'success'))
       .catch(() => {});
   }
