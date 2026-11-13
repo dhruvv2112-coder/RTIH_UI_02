@@ -152,7 +152,7 @@ addEventListener('offline', () => setOnline(false));
 Object.assign(actions, {
   navigate, render,
   openTask, openQuick, openDecline, openDispatch, openEmergency,
-  reset: () => { closeSheet(true); resetDemo(); toast('Demo data reset', 'info'); },
+  reset: () => { closeSheet(true); resetDemo(); toast('App data reset', 'info'); },
 });
 
 /* ---------- Showcase panel (desktop) ---------- */

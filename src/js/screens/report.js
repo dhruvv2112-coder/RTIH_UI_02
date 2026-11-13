@@ -151,26 +151,53 @@ let saveT; function save() { clearTimeout(saveT); saveT = setTimeout(() => { try
 export function bindPhotos(root, list, rerender, { addId = 'addPhoto', max = 5 } = {}) {
   const add = $('#' + addId, root);
   const pick = $('#filePick', root);
+  const addPhoto = (url) => { const id = 'p' + Date.now(); media.set(id, { url }); list.push(id); haptic('medium'); rerender(); toast('Photo captured · compressed to 70%', 'success', 1400); };
+  if (pick) pick.onchange = async () => { const f = pick.files?.[0]; pick.value = ''; if (f) addPhoto(await compress(f)); };
   add?.addEventListener('click', () => {
     haptic('light');
     if (list.length >= max) return;
-    // Real camera on devices; falls back to a sample frame if the picker is dismissed.
-    if (pick && matchMedia('(pointer: coarse)').matches) {
-      pick.onchange = async () => {
-        const f = pick.files?.[0]; if (!f) return;
-        const id = 'p' + Date.now();
-        media.set(id, { url: await compress(f) });
-        list.push(id); rerender();
-      };
-      pick.click();
-    } else {
-      const id = 'p' + Date.now();
-      list.push(id); rerender();
-      toast('Photo captured · compressed to 70%', 'success', 1400);
-    }
+    // Phones: the system camera app (best quality, works without a secure origin).
+    // Laptops/tablets: live camera in-app; the file picker if no camera can be opened.
+    if (pick && matchMedia('(pointer: coarse)').matches) return pick.click();
+    openCameraCapture(addPhoto, () => pick?.click());
   });
   $$('[data-rm]', root).forEach((b) => b.addEventListener('click', () => { const i = list.indexOf(b.dataset.rm); if (i > -1) list.splice(i, 1); haptic('light'); rerender(); }));
   $$('[data-preview]', root).forEach((b) => b.addEventListener('click', () => previewPhoto(b.dataset.preview)));
+}
+
+/** Live camera overlay (getUserMedia) with shutter → JPEG 70 %, max 1920 px. */
+export function openCameraCapture(onPhoto, onFallback) {
+  if (!window.isSecureContext || !navigator.mediaDevices?.getUserMedia) { toast('Camera needs a secure connection — choose a photo instead', 'warning'); return onFallback?.(); }
+  const wrap = document.createElement('div');
+  wrap.className = 'photo-preview cam-capture';
+  wrap.setAttribute('role', 'dialog'); wrap.setAttribute('aria-label', 'Camera');
+  wrap.innerHTML = `<div class="cam-capture__view"><video playsinline muted autoplay></video><div class="cam-capture__msg t-body">Starting camera…</div></div>
+    <div class="cam-capture__bar"><button class="btn btn--ghost" data-c="cancel" style="color:#fff;border-color:#fff6">Cancel</button><button class="cam-shutter" data-c="snap" aria-label="Take photo" disabled></button><button class="btn btn--ghost" data-c="file" style="color:#fff;border-color:#fff6">${icon('image')}Gallery</button></div>`;
+  (document.querySelector('.device') || document.body).append(wrap);
+  const v = wrap.querySelector('video'), msg = wrap.querySelector('.cam-capture__msg'), snap = wrap.querySelector('[data-c="snap"]');
+  let stream = null;
+  const close = () => { stream?.getTracks().forEach((t) => t.stop()); wrap.remove(); };
+  navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 }, height: { ideal: 1080 } }, audio: false })
+    .then(async (s) => { stream = s; v.srcObject = s; await v.play().catch(() => {}); msg.remove(); snap.disabled = false; })
+    .catch((e) => { msg.textContent = e?.name === 'NotAllowedError' ? 'Camera permission is blocked — allow it in the browser, or pick a photo from the gallery.' : 'No camera available — pick a photo from the gallery.'; });
+  wrap.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-c]'); if (!b) return;
+    if (b.dataset.c === 'cancel') close();
+    if (b.dataset.c === 'file') { close(); onFallback?.(); }
+    if (b.dataset.c === 'snap' && v.videoWidth) {
+      const k = Math.min(1, 1920 / Math.max(v.videoWidth, v.videoHeight));
+      const c = document.createElement('canvas'); c.width = v.videoWidth * k; c.height = v.videoHeight * k;
+      c.getContext('2d').drawImage(v, 0, 0, c.width, c.height);
+      c.toBlob((blob) => { close(); onPhoto(URL.createObjectURL(blob)); }, 'image/jpeg', 0.7);
+    }
+  });
+}
+
+/** Photo as a JPEG data URL (for upload to the Command Centre). */
+export async function photoDataUrl(id) {
+  const m = media.get(id); if (!m?.url) return null;
+  const blob = await fetch(m.url).then((r) => r.blob());
+  return await new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(fr.result); fr.readAsDataURL(blob); });
 }
 
 async function compress(file) {

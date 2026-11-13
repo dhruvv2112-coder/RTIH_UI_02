@@ -288,11 +288,11 @@ export function openMenu() {
         <button class="option" data-m="scan">${icon('scan-line')}<span><span class="t-body-strong" style="display:block">Scan Vendor QR</span><span class="t-caption c-secondary">Open a stall's license & inspection</span></span></button>
         <button class="option" data-m="glasses">${icon('camera')}<span><span class="t-body-strong" style="display:block">Smart Glasses Upload</span><span class="t-caption c-secondary">Images go to S1 — you see results only</span></span></button>
       </div>
-      <div class="t-caption-strong c-tertiary" style="text-transform:uppercase;margin:20px 0 8px">Demo controls</div>
+      <div class="t-caption-strong c-tertiary" style="text-transform:uppercase;margin:20px 0 8px">Operator tools</div>
       <div class="option-list">
-        <button class="option option--danger" data-m="dispatch">${icon('siren')}<span class="t-body-strong">Simulate incoming dispatch</span></button>
+        <button class="option option--danger" data-m="dispatch">${icon('siren')}<span class="t-body-strong">Run a dispatch drill</span></button>
         <button class="option option--warn" data-m="net">${icon(state.online ? 'wifi-off' : 'wifi')}<span class="t-body-strong">${state.online ? 'Go offline' : 'Reconnect'}</span></button>
-        <button class="option" data-m="reset">${icon('rotate-ccw')}<span class="t-body-strong">Reset demo data</span></button>
+        <button class="option" data-m="reset">${icon('rotate-ccw')}<span class="t-body-strong">Reset app data</span></button>
       </div>`,
     onMount: (sheet) => {
       $('[data-m="sos"]', sheet).addEventListener('click', () => { closeSheet(true); openEmergency(); });

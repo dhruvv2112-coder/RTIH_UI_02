@@ -193,7 +193,7 @@ export function nextDispatch(injected) {
 
 /* ---------- report & inspection ---------- */
 export function submitReport() {
-  state.lastReport = { ...state.report, photos: state.report.photos.length, t: Date.now() }; // picked up by live.js
+  state.lastReport = { ...state.report, photoIds: [...state.report.photos], photos: state.report.photos.length, t: Date.now() }; // picked up by live.js
   const queued = enqueue('POST /reports', 'Field report');
   state.session.reports += 1;
   state.report = freshReport();

@@ -15,6 +15,7 @@ import { toast, openSheet, closeSheet } from './ui.js';
 import { openDispatch, dismissDispatch } from './overlays.js';
 import { icon } from './icons.js';
 import { esc, haptic, $ } from './util.js';
+import { photoDataUrl } from './screens/report.js';
 
 const STAFF_NAME = 'Ramesh Kumar';
 let live = false;
@@ -111,7 +112,8 @@ function onLocalChange(reason) {
   if (reason === 'report' && state.lastReport && !state.lastReport.sent) {
     const r = state.lastReport;
     r.sent = true;
-    api('/api/reports', { type: r.type, severity: r.severity, description: r.description, photos: r.photos, zone: 'A', lat: 17.0016, lng: 81.7689, by: STAFF_NAME })
+    (r.photoIds?.[0] ? photoDataUrl(r.photoIds[0]).catch(() => null) : Promise.resolve(null))
+      .then((photo) => api('/api/reports', { type: r.type, severity: r.severity, description: r.description, photos: r.photos, photo, zone: 'A', lat: 17.0016, lng: 81.7689, by: STAFF_NAME }))
       .then((x) => x.ok && toast('Report received by Command Centre', 'success'))
       .catch(() => {});
   }
