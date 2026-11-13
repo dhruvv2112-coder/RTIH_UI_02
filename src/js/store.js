@@ -1,6 +1,6 @@
 // Minimal reactive store with offline queue semantics (Brief §7).
 // Mirrors the Zustand + MMKV shape planned for the React Native build.
-import { seedTasks, seedNotifications, CHECKLIST, STAFF, DISPATCH_POOL } from './data.js';
+import { seedTasks, seedNotifications, CHECKLIST, STAFF, DISPATCH_POOL, RESOURCES } from './data.js';
 
 const KEY = 'rtih.godavari-field.v2'; // v2: light theme default
 const listeners = new Set();
@@ -54,6 +54,11 @@ function persist() {
     } catch { /* storage unavailable — in-memory only */ }
   }, 150);
 }
+
+/* ---------- live-link hooks (suite hub; see link.js) ---------- */
+const taskHooks = new Set();
+export function onTaskEvent(fn) { taskHooks.add(fn); return () => taskHooks.delete(fn); }
+function notify(kind, task, extra = {}) { taskHooks.forEach((fn) => { try { fn(kind, task, extra); } catch (e) { console.error(e); } }); }
 
 export function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
 export function emit(reason) { persist(); listeners.forEach((fn) => fn(reason)); }
@@ -118,21 +123,27 @@ function stamp(task, action, label) {
   return queued;
 }
 
-export function acceptTask(id) {
+export function acceptTask(id, opts = {}) {
   const t = findTask(id); if (!t) return;
-  const hasActive = !!activeTask();
+  const current = activeTask();
+  // An urgent Command Centre dispatch jumps ahead of non-urgent work in hand.
+  const preempt = !!current && !!t.hub && t.priority === 'urgent' && !(current.hub && current.priority === 'urgent');
+  if (preempt) current.status = 'accepted';
+  const hasActive = !!current && !preempt;
   t.status = hasActive ? 'accepted' : 'active';
   t.acceptedAt = Date.now();
   t.progress = t.progress || 0;
   const queued = stamp(t, `POST /tasks/${id}/accept`, 'Accept');
+  notify('accepted', t, { auto: !!opts.auto });
   emit('task');
-  return { queued, becameActive: !hasActive };
+  return { queued, becameActive: !hasActive, preempted: preempt ? current : null };
 }
 
 export function declineTask(id, reason) {
   const t = findTask(id); if (!t) return;
   t.status = 'declined'; t.declineReason = reason;
   const queued = stamp(t, `POST /tasks/${id}/decline`, 'Decline');
+  notify('declined', t, { reason });
   emit('task');
   return { queued };
 }
@@ -145,6 +156,7 @@ export function completeTask(id) {
   state.session.tasks += 1;
   if (t.kind === 'inspection') state.session.inspections += 0; // inspections counted on submit
   const queued = stamp(t, `POST /tasks/${id}/complete`, 'Complete');
+  notify('completed', t);
   const next = state.tasks.find((x) => x.status === 'accepted');
   if (next) next.status = 'active';
   emit('task');
@@ -157,6 +169,7 @@ export function addNote(id, text) {
   t.notes.push({ t: Date.now(), text: text.trim() });
   if (t.status === 'active') t.progress = Math.min(95, (t.progress || 0) + 10);
   stamp(t, `POST /tasks/${id}/notes`, 'Note');
+  notify('note', t, { note: text.trim() });
   emit('task');
 }
 
@@ -166,6 +179,7 @@ export function escalateTask(id) {
   t.notes = t.notes || [];
   t.notes.push({ t: Date.now(), text: 'Escalated to Shift Supervisor' });
   const queued = stamp(t, `POST /tasks/${id}/escalate`, 'Escalate');
+  notify('escalated', t);
   emit('task');
   return { queued };
 }
@@ -181,9 +195,33 @@ export function nextDispatch() {
   return task;
 }
 
+/** A dispatch that arrived from the Command Centre over the suite hub. */
+export function addHubTask(d) {
+  const PRI = { critical: 'urgent', high: 'high', medium: 'normal', low: 'low' };
+  const KIND = { crowd: 'crowd', gate: 'crowd', medical: 'medical', water: 'sensor', traffic: 'traffic', sos: 'safety', lost: 'safety', object: 'safety', fire: 'safety', drowning: 'safety', report: 'report', camera: 'report' };
+  const existing = state.tasks.find((t) => t.hub?.dispatchId === d.dispatchId);
+  if (existing) return existing;
+  const task = {
+    id: `TSK-27-${String(500 + state.tasks.length).padStart(4, '0')}`,
+    kind: KIND[d.kind] || 'safety', priority: PRI[d.priority] || 'high', status: 'dispatch',
+    title: d.title.replace(/ — Zone [A-D]$/, ''), short: d.title.replace(/ — Zone [A-D]$/, ''),
+    location: d.location ? `${d.location}, Zone ${d.zone}` : `Zone ${d.zone}`,
+    coords: '16.98912° N, 81.77874° E', pin: d.pin || { x: 600, y: 440 },
+    distance: Math.round(d.distance || 150), eta: d.eta || 2, dispatchedBy: 'Command Centre',
+    instructions: d.instruction || d.desc || 'Proceed to the location and report on arrival.',
+    resources: RESOURCES.ghat3, dispatchedAt: Date.now(), notes: [],
+    hub: { dispatchId: d.dispatchId, alertId: d.alertId, sosId: d.sosId || null },
+  };
+  state.tasks.unshift(task);
+  state.notifications.unshift({ id: 'n' + Date.now(), type: task.priority === 'urgent' ? 'urgent' : 'normal', title: task.priority === 'urgent' ? 'Urgent Dispatch' : 'New Task Assigned', body: `${task.short} — ${task.location}`, t: Date.now(), read: false });
+  emit('dispatch');
+  return task;
+}
+
 /* ---------- report & inspection ---------- */
 export function submitReport() {
   const queued = enqueue('POST /reports', 'Field report');
+  notify('report', null, { report: structuredClone(state.report) });
   state.session.reports += 1;
   state.report = freshReport();
   emit('report');

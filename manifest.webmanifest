@@ -1,7 +1,7 @@
 {
   "name": "Godavari Field — RTIH Pushkaralu 2027",
   "short_name": "Godavari Field",
-  "start_url": "/#/tasks",
+  "start_url": "./#/tasks",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#FFFFFF",

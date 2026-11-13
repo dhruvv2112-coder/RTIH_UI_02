@@ -94,7 +94,7 @@ function bindDetail(sheet, t) {
   });
   bindHoldComplete($('#sheetComplete', sheet), t.id, () => closeSheet());
   $('#sheetAccept', sheet)?.addEventListener('click', () => {
-    const r = acceptTask(t.id); haptic('medium'); closeSheet();
+    const r = acceptTask(t.id, { auto: how === 'auto' }); haptic('medium'); closeSheet();
     toast(r.queued ? 'Accepted offline — queued' : r.becameActive ? 'Task accepted — now active' : 'Accepted — added to Up Next', r.queued ? 'warning' : 'success');
   });
   $('#sheetDecline', sheet)?.addEventListener('click', () => openDecline(t.id));
@@ -150,10 +150,11 @@ export function openDecline(id, { onCancel, onDone } = {}) {
 
 /* ---------- Dispatch overlay (§5.2) ---------- */
 let dispatchEl = null;
-export function openDispatch() {
-  if (dispatchEl) return;
+const pendingDispatches = [];
+export function openDispatch(provided) {
+  if (dispatchEl) { if (provided) pendingDispatches.push(provided); return; }
   closeSheet(true);
-  const t = nextDispatch();
+  const t = provided || nextDispatch();
   const high = t.priority !== 'urgent';
   haptic('alert'); dispatchTone(!high);
   const el = document.createElement('div');
@@ -191,7 +192,8 @@ export function openDispatch() {
     if (left <= 0) finish('auto');
   }, 250);
 
-  function close() { clearInterval(tick); el.style.transition = 'opacity 200ms'; el.style.opacity = '0'; setTimeout(() => { el.remove(); dispatchEl = null; emit('dispatch-close'); }, 200); }
+  function close() { clearInterval(tick); el.style.transition = 'opacity 200ms'; el.style.opacity = '0'; setTimeout(() => { el.remove(); dispatchEl = null; emit('dispatch-close'); const next = pendingDispatches.shift(); if (next && next.status === 'dispatch') setTimeout(() => openDispatch(next), 400); }, 200); }
+  t.cancelDispatch = (msg) => { if (dispatchEl !== el) return; close(); toast(msg, 'warning'); };
   function finish(how) {
     if (!dispatchEl) return;
     t.status = 'incoming';
@@ -199,7 +201,7 @@ export function openDispatch() {
     close();
     haptic('medium');
     if (how === 'auto') toast('Auto-accepted · No response in 30s', 'warning');
-    else toast(r.queued ? 'Dispatch accepted — queued offline' : r.becameActive ? 'Dispatch accepted — navigate now' : 'Accepted — Up Next after current task', r.queued ? 'warning' : 'success');
+    else toast(r.queued ? 'Dispatch accepted — queued offline' : r.preempted ? 'Urgent — now your current task' : r.becameActive ? 'Dispatch accepted — navigate now' : 'Accepted — Up Next after current task', r.queued ? 'warning' : 'success');
   }
   const acc = $('#dAccept', el);
   longPress(acc, 1000, {
@@ -310,6 +312,8 @@ function openGlasses() {
 /* ---------- Emergency ---------- */
 export function openEmergency() {
   haptic('alert');
+  const sosId = `SSOS-${Date.now().toString(36)}`;
+  document.dispatchEvent(new CustomEvent('gf:sos', { detail: { sosId } }));
   const el = document.createElement('div');
   el.className = 'dispatch';
   el.setAttribute('role', 'alertdialog'); el.setAttribute('aria-modal', 'true');
@@ -318,7 +322,7 @@ export function openEmergency() {
       <div class="dispatch__siren">${icon('phone-call')}</div>
       <h2 class="t-h1 dispatch__kicker">EMERGENCY PROTOCOL</h2>
       <p class="dispatch__title">SOS sent</p>
-      <p class="t-body c-secondary" style="margin:0">Supervisor, Command Centre and the nearest medical team have your live location.</p>
+      <p class="t-body c-secondary" style="margin:0" id="eMsg">Supervisor, Command Centre and the nearest medical team have your live location.</p>
       <div class="card stats" style="width:100%;margin-top:24px;text-align:left">
         <div class="stat-row">${icon('map-pin')}<span class="t-body">Ghat #3, Zone A</span><span class="stat-row__val t-mono" style="font-weight:400">16.98912° N</span></div>
         <div class="stat-row">${icon('users')}<span class="t-body">Responders</span><span class="stat-row__val c-normal">3 en route</span></div>
@@ -331,6 +335,6 @@ export function openEmergency() {
     </div>`;
   layerEl().append(el);
   $('#eCall', el).addEventListener('click', () => toast('Connecting to Command Centre…', 'info'));
-  $('#eCancel', el).addEventListener('click', () => { el.remove(); toast('SOS cancelled · Supervisor informed', 'info'); });
+  $('#eCancel', el).addEventListener('click', () => { el.remove(); document.dispatchEvent(new CustomEvent('gf:sos-cancel', { detail: { sosId } })); toast('SOS cancelled · Supervisor informed', 'info'); });
   state.notifications.unshift({ id: 'e' + Date.now(), type: 'emergency', title: 'EMERGENCY PROTOCOL', body: 'Emergency activated — Zone A', t: Date.now(), read: true });
 }

@@ -9,6 +9,7 @@ import { renderMap, bindMap, layersPanel, bindLayers } from './screens/map.js';
 import { renderReport, bindReport, reportHeaderRight } from './screens/report.js';
 import { renderInspection, bindInspection, inspectionHeaderRight } from './screens/inspection.js';
 import { renderProfile, bindProfile, renderLogin, bindLogin } from './screens/profile.js';
+import { startLiveLink } from './link.js';
 import { openTask, openQuick, openDecline, openDispatch, toggleNotifications, openMenu, openEmergency, notifOpen, closeNotif } from './overlays.js';
 
 window.__bootAt = window.__bootAt || Date.now();
@@ -195,9 +196,10 @@ if (matchMedia('(max-width: 860px)').matches) document.documentElement.style.set
 else document.documentElement.style.setProperty('--safe-bottom', '20px');
 buildPanel();
 render();
+startLiveLink();
 if (!navigator.onLine) setOnline(false);
 
 // Offline shell (P4)
 if ('serviceWorker' in navigator && location.protocol === 'https:') {
-  addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
+  addEventListener('load', () => navigator.serviceWorker.register('./sw.js').catch(() => {}));
 }

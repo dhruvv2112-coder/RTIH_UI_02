@@ -97,3 +97,7 @@ See [docs/DESIGN_SYSTEM.md](docs/DESIGN_SYSTEM.md).
 ## Credits
 
 Icons: [Lucide](https://lucide.dev) (ISC). Fonts: Inter, JetBrains Mono, Noto Sans Telugu and Noto Sans Devanagari (OFL). Map, people and data are illustrative.
+
+## Live link (Pushkaralu Suite)
+
+When served by the suite server in [RTIH_UI_01/suite](https://github.com/dhruvv2112-coder/RTIH_UI_01/tree/main/suite), this app signs in as Ramesh Kumar (dashboard staff ST-001): Command Centre dispatches arrive as INCOMING DISPATCH, and accept / decline / notes / escalate / complete, field reports and staff SOS go back to the dashboard. "Go offline" holds those events in an outbox until reconnect. Standalone, `src/js/link.js` stays dormant. Asset paths are relative so the app runs under `/field/`.
